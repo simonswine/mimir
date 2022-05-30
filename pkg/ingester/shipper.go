@@ -95,8 +95,6 @@ func NewShipper(
 // Sync performs a single synchronization, which ensures all non-compacted local blocks have been uploaded
 // to the object bucket once.
 //
-// If uploaded.
-//
 // It is not concurrency-safe, however it is compactor-safe (running concurrently with compactor is ok).
 func (s *Shipper) Sync(ctx context.Context) (uploaded int, err error) {
 	meta, err := shipper.ReadMetaFile(s.dir)
@@ -116,7 +114,7 @@ func (s *Shipper) Sync(ctx context.Context) (uploaded int, err error) {
 		hasUploaded[id] = struct{}{}
 	}
 
-	// Reset the uploaded slice so we can rebuild it only with blocks that still exist locally.
+	// Reset the uploaded slice, so we can rebuild it only with blocks that still exist locally.
 	meta.Uploaded = nil
 
 	var uploadErrs int
@@ -211,6 +209,8 @@ func (s *Shipper) upload(ctx context.Context, meta *metadata.Meta) error {
 	if err := meta.WriteToDir(s.logger, updir); err != nil {
 		return errors.Wrap(err, "write meta file")
 	}
+
+	// UploadPromBlock is like Upload, but doesn't check for external labels.
 	return block.UploadPromBlock(ctx, s.logger, s.bucket, updir, s.hashFunc)
 }
 
